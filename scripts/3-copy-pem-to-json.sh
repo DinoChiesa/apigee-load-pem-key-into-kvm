@@ -23,16 +23,33 @@ for existing_kvm in "${kvm_names[@]}"; do
     fi
 done
 
-# AI! Search the local directory for files with a name of the form
-# rsa-public-key-YYYYMMdd-HHmm.pem 
-# Sort the list of files alpha-numerically.  Choose the latest file
-# (20250623-1123 comes before 20250625-0123)
-# If you find a file of that form, then check for a similarly named
-# file like rsa-private-key-YYYYMMdd-HHmm.pem , with the same
-# timestamp in its name.
-#
-# If you do not find two files, print an appropriate message and exit.
-# IF you find a pair of files, then print a message asking for
-# confirmation.  "Insert FILE1 and FILE2 into KVM {KVM Name}? "
-#
-# IF the user responds No, then exit. 
+# Find the latest public key file matching the naming convention.
+# The ls with sort and head is a reliable way to get the latest file
+# given the YYYYMMDD-HHmm timestamp format.
+public_key_file=$(ls -1 rsa-public-key-*.pem 2>/dev/null | sort -r | head -n 1)
+
+if [[ -z "${public_key_file}" ]]; then
+    echo "No public key file of the form rsa-public-key-*.pem was found. Exiting."
+    exit 1
+fi
+
+# Derive the private key filename from the public key filename.
+private_key_file="${public_key_file/public/private}"
+
+if [[ ! -f "${private_key_file}" ]]; then
+    echo "Found public key ${public_key_file}, but the corresponding private key"
+    echo "${private_key_file} is missing. Exiting."
+    exit 1
+fi
+
+# Confirm with the user before proceeding.
+echo
+echo "Found this key pair:"
+echo "  public:  ${public_key_file}"
+echo "  private: ${private_key_file}"
+echo
+read -r -p "Insert this key pair into the KVM '${new_kvm_name}'? [y/N] " response
+if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    echo "User declined. Exiting."
+    exit 0
+fi
