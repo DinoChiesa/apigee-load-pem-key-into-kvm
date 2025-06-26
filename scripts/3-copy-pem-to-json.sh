@@ -53,3 +53,32 @@ if [[ ! "$response" =~ ^[Yy]$ ]]; then
     echo "User declined. Exiting."
     exit 0
 fi
+
+# AI! produce a new json file in the "data-folder" subdirectory.
+# The name of the file should be:
+#     env__ENVNAME__KVMNAME__kvmfile__0.json
+#
+# ...where ENVNAME is replaced with ${APIGEE_ENV} and KVMNAME is 
+# replaced with ${new_kvm_name}
+# 
+# The contents should be structured this way:
+#   {
+#     "keyValueEntries": [
+#       {
+#         "name": "public",
+#         "value": "...VALUE_HERE_.."
+#       },
+#       {
+#         "name": "private",
+#         "value": "..VALUE_HERE...."
+#       }
+#     ],
+#     "nextPageToken": ""
+#   }
+#  
+# The contents of the "value" field should be replaced by the contents of
+# the files named by ${public_key_file} and ${private_key_file}, with one 
+# transformation: newlines that appear in these files should be replaced with \n 
+# in the strings here in this file.  You can use jq here if it is helpful,
+# but it is not necessary to use jq. Just do it the simplest way.
+#
