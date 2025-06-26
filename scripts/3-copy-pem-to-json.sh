@@ -22,3 +22,17 @@ for existing_kvm in "${kvm_names[@]}"; do
         exit 1
     fi
 done
+
+# AI! Search the local directory for files with a name of the form
+# rsa-public-key-YYYYMMdd-HHmm.pem 
+# Sort the list of files alpha-numerically.  Choose the latest file
+# (20250623-1123 comes before 20250625-0123)
+# If you find a file of that form, then check for a similarly named
+# file like rsa-private-key-YYYYMMdd-HHmm.pem , with the same
+# timestamp in its name.
+#
+# If you do not find two files, print an appropriate message and exit.
+# IF you find a pair of files, then print a message asking for
+# confirmation.  "Insert FILE1 and FILE2 into KVM {KVM Name}? "
+#
+# IF the user responds No, then exit. 
