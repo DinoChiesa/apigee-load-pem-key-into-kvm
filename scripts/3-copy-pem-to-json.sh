@@ -15,12 +15,54 @@ check_required_commands openssl jq
 # array named 'kvm_names'.
 mapfile -t kvm_names < <(apigeecli kvms list --env "${APIGEE_ENV}" --org "${APIGEE_PROJECT}" | jq -r '.[]')
 
-# AI! modify this prompt.  Present the list of existing kvm_names as a numbered
-# list of choices.  Allow the user to select a number.  (It could be multiple digits)
-# Append a choice of [0] corresponding to "enter a new name". 
+# Prompt the user to select an existing KVM or create a new one.
+echo
+echo "Select a KVM to update, or select 0 to create a new one:"
+i=1
+for name in "${kvm_names[@]}"; do
+    printf "  [%d] %s\n" "$i" "$name"
+    ((i++))
+done
+printf "  [0] %s\n" "enter a new name"
+echo
 
-# Prompt for the name of the new KVM.
-read -r -p "Name of the to-be-created environment-scoped Key Value Map:? " new_kvm_name
+new_kvm_name=""
+while true; do
+    read -r -p "Your choice: " choice
+    # Validate that choice is a number
+    if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
+        echo "Invalid input. Please enter a number."
+        continue
+    fi
+
+    # Validate that choice is in the valid range
+    if (( choice < 0 || choice > ${#kvm_names[@]} )); then
+        echo "Invalid choice. Please select a number from the list."
+        continue
+    fi
+
+    # Handle the choice
+    if (( choice == 0 )); then
+        read -r -p "Enter the name for the new KVM: " new_kvm_name
+        # Check if the new name is empty
+        if [[ -z "$new_kvm_name" ]]; then
+            echo "KVM name cannot be empty. Exiting."
+            exit 1
+        fi
+        # Check if the KVM already exists.
+        for existing_kvm in "${kvm_names[@]}"; do
+            if [[ "${existing_kvm}" == "${new_kvm_name}" ]]; then
+                echo "A KVM with the name '${new_kvm_name}' already exists. Exiting."
+                exit 1
+            fi
+        done
+    else
+        # Array is 0-indexed, choice is 1-indexed
+        new_kvm_name="${kvm_names[choice-1]}"
+        echo "You selected existing KVM: ${new_kvm_name}"
+    fi
+    break # Exit the validation loop
+done
 
 
 # Find the latest public key file matching the naming convention.
