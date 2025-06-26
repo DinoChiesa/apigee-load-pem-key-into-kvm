@@ -67,23 +67,20 @@ while true; do
 done
 
 # 2. collect known entries
-# AI! if the kvm exists, collect the names of the entries in that KVM.
-# Use the command shown below. The output of the command will be structured like
-# this:
-#   {
-#     "keyValueEntries": [
-#       {
-#         "name": "name-of-entry1",
-#         "value": "-value-of-entry-1"
-#       }
-#       {
-#         "name": "name-of-entry2",
-#         "value": "-value-of-entry-2"
-#       }
-#     ]  
-#   }
-# Use the jq tool to get the list of entry names in the existing kvm. 
-apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_ENV}" --env "${APIGEE_ENV}"
+kvm_entry_names=()
+if (( kvm_exists == 1 )); then
+    echo
+    echo "Checking for existing entries in KVM '${selected_kvm_name}'..."
+    # The apigeecli call returns a JSON object.
+    # We use jq to parse the JSON and mapfile to read the entry names into a shell
+    # array named 'kvm_entry_names'. Note the use of APIGEE_PROJECT for the org.
+    mapfile -t kvm_entry_names < <(apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" | jq -r '.keyValueEntries[].name')
+    if (( ${#kvm_entry_names[@]} > 0 )); then
+        echo "Found existing entries."
+    else
+        echo "No existing entries found."
+    fi
+fi
 
 
 # 3. find the public/private key pair
