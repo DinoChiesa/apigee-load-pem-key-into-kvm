@@ -6,12 +6,14 @@ scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${scriptdir}/lib/utils.sh"
 
 check_shell_variables APIGEE_PROJECT APIGEE_ENV
-check_required_commands openssl jq gcloud sed tr 
+check_required_commands openssl jq gcloud curl
+
+TOKEN=$(gcloud auth print-access-token)
 
 # The apigeecli call returns a JSON array of KVM names.
 # We use jq to parse the JSON and mapfile to read the names into a shell
 # array named 'kvm_names'.
-mapfile -t kvm_names < <(apigeecli kvms list --env "${APIGEE_ENV}" --org "${APIGEE_PROJECT}" | jq -r '.[]')
+mapfile -t kvm_names < <(apigeecli kvms list --env "${APIGEE_ENV}" --org "${APIGEE_PROJECT}" --token "${TOKEN}" | jq -r '.[]')
 
 # 1. Prompt the user to select an existing KVM or create a new one.
 echo
@@ -116,33 +118,63 @@ fi
 
 # 5. if the selected_kvm_name does not already exist, create it here.
 apigee=https://apigee.googleapis.com
-TOKEN=$(gcloud auth print-access-token)
 if (( kvm_exists == 0 )); then
-echo "Creating the kvm  ${selected_key_name}..."
-CURL -X POST "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps" \
+echo "Creating the kvm ${selected_kvm_name}..."
+curl -X POST "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps" \
  -H "Authorization: Bearer $TOKEN" \
  -H "Content-Type: application/json" \
   -d '{
-  "name": "'${selected_kvm_name}'",
+  "name": "'"${selected_kvm_name}"'",
   "encrypted": true
  }'
 fi
 
+# Helper function to check if a KVM entry exists in the kvm_entry_names array.
+function entry_name_exists() {
+    local entry_to_find=$1
+    for entry in "${kvm_entry_names[@]}"; do
+        if [[ "$entry" == "$entry_to_find" ]]; then
+            return 0 # found (success)
+        fi
+    done
+    return 1 # not found (failure)
+}
 
-# 6. create the entries.
-# AI! Turn the  following into a loop. Do this once for the public key, once for the private key. 
+# 6. create or update the entries for the key pair.
+echo
+echo "Creating/updating KVM entries..."
 
-content=$(cat ${public_key_file} | sed 's/^[ ]*//g' | tr '\n' $ | sed 's/\$/\\n/g')
-if (( entry_name_exists "publickey" )); then
-  CURL -X PUT "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps/${selected_kvm_name}/entries"
- -H "Authorization: Bearer $TOKEN" \
- -H "Content-Type: application/json" \
- -d '{"name":"publickey", "value":"'${content}'"}'
-else
-  CURL -X POST "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps/${selected_kvm_name}/entries"
- -H "Authorization: Bearer $TOKEN" \
- -H "Content-Type: application/json" \
- -d '{"name":"publickey", "value":"'${content}'"}'
-fi
+for key_type in public private; do
+    echo "Processing ${key_type} key..."
+    entry_name="${key_type}"
+    key_file=""
+    if [[ "${key_type}" == "public" ]]; then
+        key_file="${public_key_file}"
+    else
+        key_file="${private_key_file}"
+    fi
+
+    content=$(<"${key_file}")
+
+    if entry_name_exists "${entry_name}"; then
+        # Entry exists, so update it with PUT.
+        echo "Entry '${entry_name}' exists. Updating it."
+        payload=$(jq -n --arg name "${entry_name}" --arg value "${content}" '{name: $name, value: $value}')
+        curl -s -X PUT "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps/${selected_kvm_name}/entries/${entry_name}" \
+             -H "Authorization: Bearer $TOKEN" \
+             -H "Content-Type: application/json" \
+             -d "${payload}"
+    else
+        # Entry does not exist, so create it with POST.
+        echo "Entry '${entry_name}' does not exist. Creating it."
+        payload=$(jq -n --arg name "${entry_name}" --arg value "${content}" '{name: $name, value: $value}')
+        curl -s -X POST "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps/${selected_kvm_name}/entries" \
+             -H "Authorization: Bearer $TOKEN" \
+             -H "Content-Type: application/json" \
+             -d "${payload}"
+    fi
+    echo
+done
 
 
+apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}"
