@@ -12,11 +12,13 @@ check_required_commands openssl jq
 # array named 'kvm_names'.
 mapfile -t kvm_names < <(apigeecli kvms list --env "${APIGEE_ENV}" --org "${APIGEE_PROJECT}" | jq -r '.[]')
 
-# AI! Prompt request input from the user:
-#
-#   Name of the to-be-created environment-scoped Key Value Map:?
-#
-# Store this value into a local variable here.
-# Then, check to see if the Name the user specified is in the list of
-# names retrieved by the prior command.  If present, print
-# a message like "that KVM already exists. Exiting. " and exit. 
+# Prompt for the name of the new KVM.
+read -r -p "Name of the to-be-created environment-scoped Key Value Map:? " new_kvm_name
+
+# Check if the KVM already exists.
+for existing_kvm in "${kvm_names[@]}"; do
+    if [[ "${existing_kvm}" == "${new_kvm_name}" ]]; then
+        echo "that KVM already exists. Exiting."
+        exit 1
+    fi
+done
