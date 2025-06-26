@@ -11,10 +11,18 @@ check_required_commands openssl jq gcloud
 #check_required_commands curl
 printf "\nThis script installs (or re-installs) apigeecli into \$HOME/.apigeecli/bin...\n"
 
-# AI!   Locate the apigeecli command.  First look in any of the directories on
-# the path.  If not found there, then look in $HOME/.apigeecli/bin .
-# If not found in either place, exit, printing an appropriate message. 
-# If found, set the variable apigeecli to hold the location of the executable.
+# Locate the apigeecli command. First look in PATH, then in a fallback location.
+apigeecli=$(command -v apigeecli)
+if [[ -z "${apigeecli}" ]]; then
+    fallback_path="$HOME/.apigeecli/bin/apigeecli"
+    if [[ -x "${fallback_path}" ]]; then
+        apigeecli="${fallback_path}"
+    else
+        echo "Error: The 'apigeecli' command was not found." >&2
+        echo "Please run 2-install-apigeecli.sh, or ensure apigeecli is in your PATH or in \$HOME/.apigeecli/bin." >&2
+        exit 1
+    fi
+fi
 
 TOKEN=$(gcloud auth print-access-token)
 
@@ -23,5 +31,3 @@ $apigeecli apis create bundle -f ./bundle/apiproxy --name kvm-read-test-1 -o "${
 
 # 2. deploy
 $apigeecli apis deploy --wait --name kvm-read-test-1 --ovr --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" --token "${TOKEN}" --quiet
-
-
