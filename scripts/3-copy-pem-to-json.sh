@@ -15,7 +15,7 @@ check_required_commands openssl jq
 # array named 'kvm_names'.
 mapfile -t kvm_names < <(apigeecli kvms list --env "${APIGEE_ENV}" --org "${APIGEE_PROJECT}" | jq -r '.[]')
 
-# Prompt the user to select an existing KVM or create a new one.
+# 1. Prompt the user to select an existing KVM or create a new one.
 echo
 echo "Select a KVM to update, or select 0 to create a new one:"
 i=1
@@ -26,7 +26,8 @@ done
 printf "  [0] %s\n" "enter a new name"
 echo
 
-new_kvm_name=""
+selected_kvm_name=""
+kvm_exists=0
 while true; do
     read -r -p "Your choice: " choice
     # Validate that choice is a number
@@ -43,28 +44,49 @@ while true; do
 
     # Handle the choice
     if (( choice == 0 )); then
-        read -r -p "Enter the name for the new KVM: " new_kvm_name
+        read -r -p "Enter the name for the new KVM: " selected_kvm_name
         # Check if the new name is empty
-        if [[ -z "$new_kvm_name" ]]; then
+        if [[ -z "$selected_kvm_name" ]]; then
             echo "KVM name cannot be empty. Exiting."
             exit 1
         fi
         # Check if the KVM already exists.
         for existing_kvm in "${kvm_names[@]}"; do
-            if [[ "${existing_kvm}" == "${new_kvm_name}" ]]; then
-                echo "A KVM with the name '${new_kvm_name}' already exists. Exiting."
+            if [[ "${existing_kvm}" == "${selected_kvm_name}" ]]; then
+                echo "A KVM with the name '${selected_kvm_name}' already exists. Exiting."
                 exit 1
             fi
         done
     else
         # Array is 0-indexed, choice is 1-indexed
-        new_kvm_name="${kvm_names[choice-1]}"
-        echo "You selected existing KVM: ${new_kvm_name}"
+        selected_kvm_name="${kvm_names[choice-1]}"
+        echo "You selected existing KVM: ${selected_kvm_name}"
+        kvm_exists=1
     fi
     break # Exit the validation loop
 done
 
+# 2. collect known entries
+# AI! if the kvm exists, collect the names of the entries in that KVM.
+# Use the command shown below. The output of the command will be structured like
+# this:
+#   {
+#     "keyValueEntries": [
+#       {
+#         "name": "name-of-entry1",
+#         "value": "-value-of-entry-1"
+#       }
+#       {
+#         "name": "name-of-entry2",
+#         "value": "-value-of-entry-2"
+#       }
+#     ]  
+#   }
+# Use the jq tool to get the list of entry names in the existing kvm. 
+apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_ENV}" --env "${APIGEE_ENV}"
 
+
+# 3. find the public/private key pair
 # Find the latest public key file matching the naming convention.
 # The ls with sort and head is a reliable way to get the latest file
 # given the YYYYMMDD-HHmm timestamp format.
@@ -84,23 +106,24 @@ if [[ ! -f "${private_key_file}" ]]; then
   exit 1
 fi
 
-# Confirm with the user before proceeding.
+# 4. Confirm with the user before proceeding.
 echo
 echo "Found this key pair:"
 echo "  public:  ${public_key_file}"
 echo "  private: ${private_key_file}"
 echo
-read -r -p "Insert this key pair into the KVM '${new_kvm_name}'? [y/N] " response
+read -r -p "Insert this key pair into the KVM '${selected_kvm_name}'? [y/N] " response
 if [[ ! "$response" =~ ^[Yy]$ ]]; then
   echo "User declined. Exiting."
   exit 0
 fi
 
+
 # Create the output directory if it doesn't exist.
 mkdir -p data-folder
 
 # Construct the output filename.
-output_filename="data-folder/env__${APIGEE_ENV}__${new_kvm_name}__kvmfile__0.json"
+output_filename="data-folder/env__${APIGEE_ENV}__${selected_kvm_name}__kvmfile__0.json"
 
 # Read the key files' content.
 public_key_content=$(<"${public_key_file}")
