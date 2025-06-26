@@ -1,14 +1,10 @@
 #!/bin/bash
 # -*- mode:shell-script; coding:utf-8; -*-
 
+# Get the directory of the script, so we can source files relative to it.
+scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# AI! what syntax do I need to use here to source a file from 
-# a subdirectory here.  It should work regardless of the
-# current working directory when the script was invoked.
-
-source ${scriptdir}/lib/utils.sh
-
-read -r -p "continue?? " cont_resp
+source "${scriptdir}/lib/utils.sh"
 
 check_shell_variables APIGEE_PROJECT APIGEE_ENV
 
