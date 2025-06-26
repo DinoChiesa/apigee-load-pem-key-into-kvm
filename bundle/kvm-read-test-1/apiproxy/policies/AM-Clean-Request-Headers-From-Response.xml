@@ -1,0 +1,30 @@
+<AssignMessage name='AM-Clean-Request-Headers-From-Response'>
+  <Remove>
+    <Headers>
+      <Header name='Host'/>
+      <Header name='Accept'/>
+      <Header name='Authorization'/>
+      <Header name='Origin'/>
+      <Header name='user-agent'/>
+      <Header name='X-Request-id'/>
+      <Header name='x-client-data'/>
+      <Header name='x-cloud-trace-context'/>
+      <Header name='X-Powered-By'/>
+      <Header name='X-b3-traceid'/>
+      <Header name='X-b3-spanid'/>
+      <Header name='X-b3-sampled'/>
+      <Header name='X-Forwarded-For'/>
+      <Header name='X-Forwarded-Port'/>
+      <Header name='X-Forwarded-Proto'/>
+      <Header name='x-client-cert-chain-verified'/>
+      <Header name='x-client-cert-error'/>
+      <Header name='x-client-cert-present'/>
+      <Header name='x-client-cert-serial'/>
+      <Header name='x-client-cert-subject-b64'/>
+      <Header name='x-client-cert-uri-sans'/>
+      <Header name='x-client-cert-valid-not-after'/>
+      <Header name='x-client-cert-valid-not-before'/>
+      <Header name='x-client-cert-fingerprint'/>
+    </Headers>
+  </Remove>
+</AssignMessage>

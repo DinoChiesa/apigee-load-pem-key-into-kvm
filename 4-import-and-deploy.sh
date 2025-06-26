@@ -25,10 +25,10 @@ if [[ -z "${apigeecli}" ]]; then
 fi
 
 TOKEN=$(gcloud auth print-access-token)
-
+pname=kvm-read-test-1
 # 1. import
 echo "Importing the API proxy bundle..."
-if ! $apigeecli apis create bundle -f ./bundle/apiproxy --name kvm-read-test-1 -o "${APIGEE_PROJECT}" --token "${TOKEN}" --quiet; then
+if ! $apigeecli apis create bundle -f "./bundle/${pname}/apiproxy" --name "$pname" -o "${APIGEE_PROJECT}" --token "${TOKEN}" ; then
     echo "Error: Failed to import the API proxy bundle." >&2
     exit 1
 fi
@@ -37,8 +37,9 @@ echo
 
 # 2. deploy
 echo "Deploying the API proxy..."
-if ! $apigeecli apis deploy --wait --name kvm-read-test-1 --ovr --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" --token "${TOKEN}" --quiet; then
+if ! $apigeecli apis deploy --wait --name "$pname" --ovr --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" --token "${TOKEN}" ; then
     echo "Error: Failed to deploy the API proxy." >&2
     exit 1
 fi
 echo "Successfully deployed the API proxy."
+echo

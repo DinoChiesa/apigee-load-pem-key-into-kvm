@@ -1,0 +1,10 @@
+<KeyValueMapOperations name='KVM-Read-Private' >
+  <Scope>environment</Scope>
+  <MapName ref='request.queryparam.map'/>
+  <ExpiryTimeInSecs>300</ExpiryTimeInSecs>
+  <Get assignTo='extracted'>
+    <Key>
+      <Parameter>privatekey</Parameter>
+    </Key>
+  </Get>
+</KeyValueMapOperations>
