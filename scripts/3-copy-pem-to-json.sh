@@ -3,12 +3,10 @@
 
 # Get the directory of the script, so we can source files relative to it.
 scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
 source "${scriptdir}/lib/utils.sh"
 
 check_shell_variables APIGEE_PROJECT APIGEE_ENV
-
-check_required_commands openssl jq
+check_required_commands openssl jq gcloud sed tr 
 
 # The apigeecli call returns a JSON array of KVM names.
 # We use jq to parse the JSON and mapfile to read the names into a shell
@@ -116,44 +114,35 @@ if [[ ! "$response" =~ ^[Yy]$ ]]; then
 fi
 
 
-# Create the output directory if it doesn't exist.
-mkdir -p data-folder
-
-# Construct the output filename.
-output_filename="data-folder/env__${APIGEE_ENV}__${selected_kvm_name}__kvmfile__0.json"
-
-# Read the key files' content.
-public_key_content=$(<"${public_key_file}")
-private_key_content=$(<"${private_key_file}")
-
-# Use jq to construct the JSON payload and write it to the file.
-# The -n flag creates the JSON from scratch.
-# --arg passes the key contents as string variables to jq, which handles escaping.
-jq -n \
-  --arg pubkey "${public_key_content}" \
-  --arg privkey "${private_key_content}" \
-  '{
-     "keyValueEntries": [
-       {
-         "name": "public",
-         "value": $pubkey
-       },
-       {
-         "name": "private",
-         "value": $privkey
-       }
-     ],
-     "nextPageToken": ""
-   }' >"${output_filename}"
-
-echo
-echo "Successfully created KVM data file:"
-echo "  ${output_filename}"
-echo
-cat ${output_filename}
-
-
-
+# 5. if the selected_kvm_name does not already exist, create it here.
 apigee=https://apigee.googleapis.com
-echo "Now, run this command: "
-echo "curl -X POST $apigee/v1/organizations/\${APIGEE_PROJECT}/environments/\${APIGEE_ENV}/keyvaluemaps/:kvm/entries/entry-3"
+TOKEN=$(gcloud auth print-access-token)
+if (( kvm_exists == 0 )); then
+echo "Creating the kvm  ${selected_key_name}..."
+CURL -X POST "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps" \
+ -H "Authorization: Bearer $TOKEN" \
+ -H "Content-Type: application/json" \
+  -d '{
+  "name": "'${selected_kvm_name}'",
+  "encrypted": true
+ }'
+fi
+
+
+# 6. create the entries.
+# AI! Turn the  following into a loop. Do this once for the public key, once for the private key. 
+
+content=$(cat ${public_key_file} | sed 's/^[ ]*//g' | tr '\n' $ | sed 's/\$/\\n/g')
+if (( entry_name_exists "publickey" )); then
+  CURL -X PUT "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps/${selected_kvm_name}/entries"
+ -H "Authorization: Bearer $TOKEN" \
+ -H "Content-Type: application/json" \
+ -d '{"name":"publickey", "value":"'${content}'"}'
+else
+  CURL -X POST "${apigee}/v1/organizations/${APIGEE_PROJECT}/environments/${APIGEE_ENV}/keyvaluemaps/${selected_kvm_name}/entries"
+ -H "Authorization: Bearer $TOKEN" \
+ -H "Content-Type: application/json" \
+ -d '{"name":"publickey", "value":"'${content}'"}'
+fi
+
+
