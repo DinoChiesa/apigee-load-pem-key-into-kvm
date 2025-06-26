@@ -26,9 +26,19 @@ fi
 
 TOKEN=$(gcloud auth print-access-token)
 
-# AI! For the following two commands, insert appropriate error checking with if COMMAND; then ...
 # 1. import
-$apigeecli apis create bundle -f ./bundle/apiproxy --name kvm-read-test-1 -o "${APIGEE_PROJECT}" --token "${TOKEN}" --quiet
+echo "Importing the API proxy bundle..."
+if ! $apigeecli apis create bundle -f ./bundle/apiproxy --name kvm-read-test-1 -o "${APIGEE_PROJECT}" --token "${TOKEN}" --quiet; then
+    echo "Error: Failed to import the API proxy bundle." >&2
+    exit 1
+fi
+echo "Successfully imported the API proxy."
+echo
 
 # 2. deploy
-$apigeecli apis deploy --wait --name kvm-read-test-1 --ovr --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" --token "${TOKEN}" --quiet
+echo "Deploying the API proxy..."
+if ! $apigeecli apis deploy --wait --name kvm-read-test-1 --ovr --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" --token "${TOKEN}" --quiet; then
+    echo "Error: Failed to deploy the API proxy." >&2
+    exit 1
+fi
+echo "Successfully deployed the API proxy."
