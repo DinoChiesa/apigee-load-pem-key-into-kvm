@@ -146,7 +146,7 @@ echo "Creating/updating KVM entries..."
 
 for key_type in public private; do
     echo "Processing ${key_type} key..."
-    entry_name="${key_type}"
+    entry_name="${key_type}key"
     key_file=""
     if [[ "${key_type}" == "public" ]]; then
         key_file="${public_key_file}"
@@ -154,7 +154,9 @@ for key_type in public private; do
         key_file="${private_key_file}"
     fi
 
-    content=$(<"${key_file}")
+    # Either of these works to get the content of the key file:
+    #content=$(<"${key_file}")
+    content=$(cat ${key_file} | sed 's/^[ ]*//g' | tr '\n' $ | sed 's/\$/\n/g')
 
     if entry_name_exists "${entry_name}"; then
         # Entry exists, so update it with PUT.
@@ -176,5 +178,9 @@ for key_type in public private; do
     echo
 done
 
+echo ""
+echo ""
+echo "The contents of the KVM: "
 
+# AI! filter the the output here of the below comment through jq to pretty-print the json
 apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}"
