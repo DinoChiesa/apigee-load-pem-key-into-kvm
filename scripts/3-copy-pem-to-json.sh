@@ -1,9 +1,16 @@
 #!/bin/bash
 # -*- mode:shell-script; coding:utf-8; -*-
 
-source ./lib/utils.sh
 
-check_shell_variables    APIGEE_PROJECT   APIGEE_ENV
+# AI! what syntax do I need to use here to source a file from 
+# a subdirectory here.  It should work regardless of the
+# current working directory when the script was invoked.
+
+source ${scriptdir}/lib/utils.sh
+
+read -r -p "continue?? " cont_resp
+
+check_shell_variables APIGEE_PROJECT APIGEE_ENV
 
 check_required_commands openssl jq
 
@@ -17,10 +24,10 @@ read -r -p "Name of the to-be-created environment-scoped Key Value Map:? " new_k
 
 # Check if the KVM already exists.
 for existing_kvm in "${kvm_names[@]}"; do
-    if [[ "${existing_kvm}" == "${new_kvm_name}" ]]; then
-        echo "that KVM already exists. Exiting."
-        exit 1
-    fi
+  if [[ "${existing_kvm}" == "${new_kvm_name}" ]]; then
+    echo "that KVM already exists. Exiting."
+    exit 1
+  fi
 done
 
 # Find the latest public key file matching the naming convention.
@@ -29,17 +36,17 @@ done
 public_key_file=$(ls -1 rsa-public-key-*.pem 2>/dev/null | sort -r | head -n 1)
 
 if [[ -z "${public_key_file}" ]]; then
-    echo "No public key file of the form rsa-public-key-*.pem was found. Exiting."
-    exit 1
+  echo "No public key file of the form rsa-public-key-*.pem was found. Exiting."
+  exit 1
 fi
 
 # Derive the private key filename from the public key filename.
 private_key_file="${public_key_file/public/private}"
 
 if [[ ! -f "${private_key_file}" ]]; then
-    echo "Found public key ${public_key_file}, but the corresponding private key"
-    echo "${private_key_file} is missing. Exiting."
-    exit 1
+  echo "Found public key ${public_key_file}, but the corresponding private key"
+  echo "${private_key_file} is missing. Exiting."
+  exit 1
 fi
 
 # Confirm with the user before proceeding.
@@ -50,8 +57,8 @@ echo "  private: ${private_key_file}"
 echo
 read -r -p "Insert this key pair into the KVM '${new_kvm_name}'? [y/N] " response
 if [[ ! "$response" =~ ^[Yy]$ ]]; then
-    echo "User declined. Exiting."
-    exit 0
+  echo "User declined. Exiting."
+  exit 0
 fi
 
 # Create the output directory if it doesn't exist.
@@ -68,9 +75,9 @@ private_key_content=$(<"${private_key_file}")
 # The -n flag creates the JSON from scratch.
 # --arg passes the key contents as string variables to jq, which handles escaping.
 jq -n \
-   --arg pubkey "${public_key_content}" \
-   --arg privkey "${private_key_content}" \
-   '{
+  --arg pubkey "${public_key_content}" \
+  --arg privkey "${private_key_content}" \
+  '{
      "keyValueEntries": [
        {
          "name": "public",
@@ -82,9 +89,10 @@ jq -n \
        }
      ],
      "nextPageToken": ""
-   }' > "${output_filename}"
+   }' >"${output_filename}"
 
 echo
 echo "Successfully created KVM data file:"
 echo "  ${output_filename}"
 echo
+cat ${output_filename}
