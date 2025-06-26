@@ -182,5 +182,4 @@ echo ""
 echo ""
 echo "The contents of the KVM: "
 
-# AI! filter the the output here of the below comment through jq to pretty-print the json
-apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}"
+apigeecli kvms entries list -m "${selected_kvm_name}" --org "${APIGEE_PROJECT}" --env "${APIGEE_ENV}" | jq
