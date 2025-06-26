@@ -39,12 +39,11 @@ You can get all of these things in the [Google Cloud Shell](https://cloud.google
    ```
 
 
-2. Install apigeecli into $HOME/.apigeecli/bin
+2. Install [the apigeecli tool](https://github.com/apigee/apigeecli) into `$HOME/.apigeecli/bin`
 
    This is good for managing apigee. Listing KVMs, updating KVMs, deploying proxies, and so on.
    You can skip this step if you already have apigeecli on your path.
 
-   Install [the apigeecli tool](https://github.com/apigee/apigeecli)
    ```sh
    ./2-install-apigeecli.sh
    ```
@@ -68,15 +67,15 @@ You can get all of these things in the [Google Cloud Shell](https://cloud.google
 5. Invoke the proxy to retrieve the data items you just uploaded:
 
    ```sh
-   curl -i -X GET \$your_apigee_endpoint/kvm-read-test-1/public\?map=NAME_OF_MAP
-   curl -i -X GET \$your_apigee_endpoint/kvm-read-test-1/private\?map=NAME_OF_MAP
+   curl -i -X GET $your_apigee_endpoint/kvm-read-test-1/public\?map=NAME_OF_MAP
+   curl -i -X GET $your_apigee_endpoint/kvm-read-test-1/private\?map=NAME_OF_MAP
    ```
 
 ## License
 
 This material is [Copyright © 2025 Google LLC](./NOTICE).
-and is licensed under the [Apache 2.0 License](LICENSE). This includes the Java
-code as well as the API Proxy configuration.
+and is licensed under the [Apache 2.0 License](LICENSE). This includes the bash scripts
+as well as the API Proxy configuration.
 
 ## Support
 
@@ -84,6 +83,3 @@ This example is open-source software, and is not a supported part of Apigee.  If
 you need assistance, you can try inquiring on [the Google Cloud Community forum
 dedicated to Apigee](https://goo.gle/apigee-community) There is no service-level
 guarantee for responses to inquiries posted to that site.
-
-
-
