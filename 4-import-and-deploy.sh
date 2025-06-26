@@ -22,8 +22,8 @@ source "${scriptdir}/lib/utils.sh"
 check_shell_variables APIGEE_PROJECT APIGEE_ENV
 check_required_commands openssl jq gcloud
 
-#check_required_commands curl
-printf "\nThis script installs (or re-installs) apigeecli into \$HOME/.apigeecli/bin...\n"
+printf "\nThis script imports and deploys the sample API Proxy bundle, using\n"
+printf "apigeecli.....\n"
 
 # Locate the apigeecli command. First look in PATH, then in a fallback location.
 apigeecli=$(command -v apigeecli)

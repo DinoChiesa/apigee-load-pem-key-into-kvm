@@ -19,15 +19,20 @@
 scriptdir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 source ${scriptdir}/lib/utils.sh
 
-# check_shell_variables FOO BAR
-
 check_required_commands openssl
+
+printf "\nThis script uses the openssl command to generate an RSA public+private\n"
+printf "key pair, stored in local filesystem files.\n\n"
+
 
 TIMESTAMP=$(date +'%Y%m%d-%H%M')
 PRIVATE_KEY_FILE="rsa-private-key-${TIMESTAMP}.pem"
 PUBLIC_KEY_FILE="rsa-public-key-${TIMESTAMP}.pem"
 openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "${PRIVATE_KEY_FILE}"
 openssl pkey -pubout -inform PEM -in "${PRIVATE_KEY_FILE}" -out "${PUBLIC_KEY_FILE}"
+
+echo ""
+echo "Done."
 echo ""
 echo "private key: ${PRIVATE_KEY_FILE}"
 echo "public key:  ${PUBLIC_KEY_FILE}"

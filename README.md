@@ -55,8 +55,15 @@ You can get all of these things in the [Google Cloud Shell](https://cloud.google
    making any changes.
 
    ```sh
-   3-upload-pem-to-kvm.sh
+   ./3-upload-pem-to-kvm.sh
    ```
+
+   > Note: This script uploads a private key into the KVM.  This is not necessarily
+   > a good idea for production use.  Normally you will want to store secrets like
+   > a private key in the [Secret Manager](https://cloud.google.com/security/products/secret-manager) or similar.
+   > If you do upload PEM-encoded private keys into the KVM, consider using a password-
+   > encrypted private key. This example is only an example. Consult your security
+   > advisor about all key management questions.
 
 4. Deploy the Apigee API proxy that reads this KVM.
 
@@ -70,6 +77,15 @@ You can get all of these things in the [Google Cloud Shell](https://cloud.google
    curl -i -X GET $your_apigee_endpoint/kvm-read-test-1/public\?map=NAME_OF_MAP
    curl -i -X GET $your_apigee_endpoint/kvm-read-test-1/private\?map=NAME_OF_MAP
    ```
+
+## Cleanup
+
+To undeploy and delete the sample proxy:
+```sh
+./00-cleanup.sh
+```
+
+This script does not remove the example items from the KVM.
 
 ## License
 

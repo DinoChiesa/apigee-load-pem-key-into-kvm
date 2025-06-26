@@ -22,6 +22,11 @@ source "${scriptdir}/lib/utils.sh"
 check_shell_variables APIGEE_PROJECT APIGEE_ENV
 check_required_commands openssl jq gcloud curl
 
+printf "\nThis script uploads a PEM-encoded RSA public key and private key into an\n"
+printf "environment-scoped KVM within Apigee X or hybrid. It uses apigeecli and\n"
+printf "curl to manipulate the KVM. The public & private key files must already\n"
+printf "exist.\n\n"
+
 TOKEN=$(gcloud auth print-access-token)
 
 # The apigeecli call returns a JSON array of KVM names.
