@@ -15,16 +15,13 @@ check_required_commands openssl jq
 # array named 'kvm_names'.
 mapfile -t kvm_names < <(apigeecli kvms list --env "${APIGEE_ENV}" --org "${APIGEE_PROJECT}" | jq -r '.[]')
 
+# AI! modify this prompt.  Present the list of existing kvm_names as a numbered
+# list of choices.  Allow the user to select a number.  (It could be multiple digits)
+# Append a choice of [0] corresponding to "enter a new name". 
+
 # Prompt for the name of the new KVM.
 read -r -p "Name of the to-be-created environment-scoped Key Value Map:? " new_kvm_name
 
-# Check if the KVM already exists.
-for existing_kvm in "${kvm_names[@]}"; do
-  if [[ "${existing_kvm}" == "${new_kvm_name}" ]]; then
-    echo "that KVM already exists. Exiting."
-    exit 1
-  fi
-done
 
 # Find the latest public key file matching the naming convention.
 # The ls with sort and head is a reliable way to get the latest file
@@ -92,3 +89,9 @@ echo "Successfully created KVM data file:"
 echo "  ${output_filename}"
 echo
 cat ${output_filename}
+
+
+
+apigee=https://apigee.googleapis.com
+echo "Now, run this command: "
+echo "curl -X POST $apigee/v1/organizations/\${APIGEE_PROJECT}/environments/\${APIGEE_ENV}/keyvaluemaps/:kvm/entries/entry-3"
