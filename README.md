@@ -32,8 +32,13 @@ common scenario.
 This example is not an official Google product, nor is it part of an
 official Google product.
 
+## Screencast
 
-## Using it
+If you'd prefer to watch me walk through this example, 
+[click here](https://youtu.be/OcVLt0pOVdg) for a quick screencast.
+
+
+## Using it Yourself
 
 To use this example, you need a bash shell, as well as:
 
